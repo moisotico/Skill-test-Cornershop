@@ -1,3 +1,9 @@
 .idea/
 __pycache__/
 .DS_Store
+
+#ignore /data and /out folders
+out/
+data/
+notes.md
+integrations/richart_wholesale_club/credentials.py
