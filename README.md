@@ -1,22 +1,14 @@
 # Cornershop's Skill Test for Integrations
 
----
-
 
 
 ## About
 
----
-
-The following is part of **Cornershop's backend skill integration test**. The requirements can be read at `instructions.md`
-
-The following instructions require [**Python 3** and **pip**](https://www.python.org/downloads/) installed. 
+The following is part of **Cornershop's backend skill integration test**. The requirements can be read at `instructions.md`. The following instructions require [**Python 3** and **pip**](https://www.python.org/downloads/) installed. 
 
 
 
-## Downloading the repo
-
-----
+## Downloading 
 
 - Start by downloading this repo:
 
@@ -25,18 +17,18 @@ The following instructions require [**Python 3** and **pip**](https://www.python
   $ git clone https://github.com/moisotico/Skill-test-Cornershop
   ```
 
-- Create a file called `credentials.py`:
-
-  ```shell
-  $ cd Skill-test-Cornershop/
-  $ touch credentials.py
-  ```
-
-
+  
 
 ## Setting your environment
 
-----
+### API Credentials
+
+- Create a file called `credentials.py`:
+
+  ```shell
+  $ cd Skill-test-Cornershop/integrations/richart_wholesale_club/
+  $ touch credentials.py
+  ```
 
 - Write the following in `credentials.py` and save:
 
@@ -44,9 +36,10 @@ The following instructions require [**Python 3** and **pip**](https://www.python
   GRAND_TYPE = "client_credentials"
   CLIENT_ID = "mRkZGFjM"
   CLIENT_SECRET = "ZGVmMjMz"
+  BASE_URL = "https://integration-skill-test-server.herokuapp.com/"
   ```
 
-  ### Setting Anaconda/ Miniconda (option 1)
+### Option 1: Setting Anaconda/ Miniconda 
 
 - If you have **Anaconda** or **Miniconda** installed [(you can get it here)](https://docs.conda.io/projects/conda/en/latest/user-guide/install/), try the following steps:
 
@@ -55,7 +48,7 @@ The following instructions require [**Python 3** and **pip**](https://www.python
   $ pip install -r requirments.txt
   ```
 
-  ### Setting Virtualenv (option 2)
+### Option 2: Setting Virtualenv
 
 - If you prefer **Virtualenv**, try the following steps:
 
@@ -69,15 +62,13 @@ The following instructions require [**Python 3** and **pip**](https://www.python
 
 ## Running
 
----
-
 ### Server
 
 - Please follow the instructions at `integration-skill-test-server-master/README.md` to run the Heroku app and API. **Once done, you can run the script**.
 
 ### Script
 
-- We now run the  file `ingestion.py` :
+- Run the  file `ingestion.py` :
 
   ```shell
   $ python3 ./integrations/richart_wholesale_club/ingestion.py
@@ -87,5 +78,5 @@ The following instructions require [**Python 3** and **pip**](https://www.python
 
 ## Notes
 
----
+
 
