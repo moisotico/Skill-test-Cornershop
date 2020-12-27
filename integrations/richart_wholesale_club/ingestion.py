@@ -104,8 +104,6 @@ def filterPrice(df):
 # Output CSVs
 def mergeDfsOut(df1, df2):
     checkDir("./out")
-    df1.to_csv('./out/PRODUCTS_mod.csv', header=True)
-    df2.to_csv('./out/PRICES-STOCK_mod.csv', header=True)
     joint_df = pd.merge(df1, df2,
                         left_index=True, right_index=True, how='outer')
     joint_df.to_csv('./out/JOINT.csv', header=True)
@@ -128,6 +126,7 @@ def getCredentials():
     payload = {}
     headers = {}
     response = rq.request("POST", url, headers=headers, data=payload)
+    print("getCredentials: ", response.status_code)
     r = response.json()
     return r.get('access_token')
 
@@ -140,6 +139,7 @@ def getMerchants(token, name):
         'token': f'Bearer {token}'
     }
     response = rq.request("GET", url, headers=headers, data=payload)
+    print("getMerchants: ", response.status_code)
     r = response.json()
     merchant_id = searchMerchant(name, r)
     return merchant_id, r
@@ -147,38 +147,44 @@ def getMerchants(token, name):
 
 # update is_active field to true
 def updateMerchant(token, merchant_id, merchant):
+    
     url = f"{base_url}/api/merchants/{merchant_id}"
-    payload = f"{{\n    \"can_be_deleted\": false,\n    \"can_be_updated\": true,\n    \"id\": \"{merchant_id}\",\n    \"is_active\": true,\n    \"name\": \"{merchant}\"\n}}"
+
+    payload = {
+        "can_be_deleted": False,
+        "can_be_updated": True,
+        "id": f"{merchant_id}",
+        "is_active": True,
+        "name": f"{merchant}"
+    }
     headers = {
         'token': f'Bearer {token}'
     }
-    response = rq.request("PUT", url, headers=headers, data=payload)
-    print(response)
+    response = rq.request("PUT", url, headers=headers, json=payload)
+    print("updateMerchant: ", response.status_code)
     pass
 
 
 # delete
 def deleteMerchant(token, merchant, response):
     merchant_id = searchMerchant(merchant, response)
-    print(merchant, merchant_id)
     url = f"{base_url}/api/merchants/{merchant_id}"
     payload = {}
     headers = {
         'token': f'Bearer {token}'
     }
     response = rq.request("DELETE", url, headers=headers, data=payload)
-    print(response)
+    print("deleteMerchant: ", response.status_code)
     pass
 
 
 # Requests
 def APIRequests():
     merchant = "Richard\'s"
-    # valid_token = getCredentials()
+    valid_token = getCredentials()
     # TODO: remove this declaration of valid_token
-    valid_token = "JYY3h3AAcTm3YmcMJAAM"
     merchant_id, r = getMerchants(valid_token, merchant)
-    #updateMerchant(valid_token, merchant_id, merchant)
+    updateMerchant(valid_token, merchant_id, merchant)
     deleteMerchant(valid_token, "Beauty", r)
     pass
 
