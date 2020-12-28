@@ -5,7 +5,7 @@ import re
 import os
 from credentials import GRAND_TYPE, CLIENT_ID, CLIENT_SECRET, BASE_URL
 
-# Get credentials variables. TODO: check if this is safe
+# Get credentials variables. 
 grant_type = GRAND_TYPE
 cliend_id = CLIENT_ID
 client_secret = CLIENT_SECRET
@@ -76,18 +76,18 @@ def editCategoryStr(row):
 def extractPackage(df):
     units = ["UN", "KGS", "KG", "GR", "GRS", "G", "ML", "CJA"]
     for pattern in units:
+        # find package and match last
         match = re.findall(r"\b\d\.?\+?\d*\s?"+pattern+r"\b",
                            df["ITEM_DESCRIPTION"])
         if match:
             last_match = match[-1].strip()
-            print(df["ITEM_DESCRIPTION"])
+            # Remove extracted item
             df["ITEM_DESCRIPTION"] = re.sub(
                 last_match + r"\.?", '', df["ITEM_DESCRIPTION"])
+            # Remove extra whitespace
             df["ITEM_DESCRIPTION"] = re.sub(' +', ' ', df["ITEM_DESCRIPTION"])
 
             df["PACKAGE"] = last_match
-            print("description:", df["ITEM_DESCRIPTION"],
-                  "Package: ", df["PACKAGE"])
             return df
     return df
 
@@ -113,7 +113,6 @@ def filterProducts(df):
     df1 = df1.applymap(lambda x: removeHtmlTags(str(x)))
     df.update(df1)
     df = joinCategories(df)
-    df = filterPackage(df)
     return df
 
 
@@ -126,8 +125,7 @@ def filterPrice(df):
 # Output CSVs
 def mergeDfsOut(df1, df2):
     checkDir("./out")
-    joint_df = pd.merge(df1, df2,
-                        left_index=True, right_index=True, how='outer')
+    joint_df = pd.merge(df1, df2, how='outer')
     joint_df.to_csv('./out/JOINT.csv', header=True)
     return joint_df
 
@@ -203,48 +201,46 @@ def deleteMerchant(token, merchant, response):
     return -1
 
 
-'''
-def sendProducts(token, merchant_id, merchant, df):
-    url = "{{base_url}}/api/products"
+# Send products to the API
+def sendProducts(df, token, merchant_id):
+    url = f"{base_url}/api/products"
 
     payload = {
         "merchant_id": f"{merchant_id}",
-        "sku": f"{sku}",
-        "barcodes": ["62773501448"],
-        "brand": f"{brand_name}",
-        "name": f"{item_name}",
-        "description": f"{item_description}",
-        "package": f"{package}",
-        "image_url": f"{item_img}",
-        "category": f"{category}",
+        "sku": str(df["SKU"]),
+        "barcodes": str(df["EAN"]),
+        "brand": str(df["BRAND_NAME"]),
+        "name": str(df["ITEM_NAME"]),
+        "description": str(df["ITEM_DESCRIPTION"]),
+        "package": str(df["PACKAGE"]),
+        "image_url": str(df["ITEM_IMG"]),
+        "category": str(df["CATEGORY"]),
         "url": "None",
         "branch_products": [{
-            "branch": "Heartland Supercentre",
-            "stock": stock,
-            "price": price,
-            "branch": "Heartland Supercentre",
-            "stock": stock,
-            "price": price
+            "branch": str(df["BRANCH"]),
+            "stock": int(df["STOCK"]),
+            "price": int(df["PRICE"]),
         }]
     }
     headers = {
         'token': f'Bearer {token}'
     }
-
-    #response = requests.request("POST", url, headers=headers, data=payload)
-
-    # print(response.text.encode('utf8'))
+    response = rq.request("POST", url, headers=headers, json=payload)
+    print("sendProducts: ", response.status_code, "\n", payload)
     pass
-'''
+
 
 # get the 100 most expensive products of each branch and their package
-
-
-def getMostExpensive(token, df, merchant_id, merchant):
+def getMostExpensive(token, df, merchant_id):
     branches = df['BRANCH'].unique().dropna()
     for i in branches:
-        me_df = df[df["BRANCH"] == i].nlargest(100, 'PRICE')
-        #sendProducts(token, merchant_id, merchant, me_df)
+        filtered_df = df[df["BRANCH"] == i].nlargest(100, 'PRICE')
+        # filter packages before sending products to save time
+        filtered_df = filterPackage(filtered_df)
+        j = 0
+        while j < 100:
+            sendProducts(filtered_df.iloc[j], token, merchant_id) 
+            j += 1
     pass
 
 
@@ -253,12 +249,9 @@ def APIRequests(df):
     merchant = "Richard\'s"
     valid_token = getCredentials()
     merchant_id, r = getMerchants(valid_token, merchant)
-    '''
-    TODO: remove comment
     updateMerchant(valid_token, merchant_id, merchant)
     deleteMerchant(valid_token, "Beauty", r)
-    '''
-    getMostExpensive(valid_token, df, merchant, merchant_id)
+    getMostExpensive(valid_token, df, merchant_id)
     pass
 
 
@@ -269,27 +262,19 @@ def process_csv_files():
     prices_dir = "./data/PRICES-STOCK.csv"
     # Create dataframes & filter into PRODUCTS.csv, SKU as unique index
     print("reading " + products_dir)
-    products_df = pd.read_csv(products_dir, sep='|',
-                              index_col='SKU').convert_dtypes()
+    products_df = pd.read_csv(products_dir, sep='|').convert_dtypes()
     products_df = filterProducts(products_df)
-
     # Create dataframes from PRICES-STOCK.csv and filter to
     # only elements in stock
     print("reading " + prices_dir)
-    prices_df = pd.read_csv(prices_dir, sep='|',
-                            index_col='SKU').convert_dtypes()
+    prices_df = pd.read_csv(prices_dir, sep='|').convert_dtypes()
     prices_df = filterPrice(prices_df)
     products_df = mergeDfsOut(products_df, prices_df)
     out_dir = './out/JOINT.csv'
     print("reading " + out_dir)
-    # TODO: erase
-    '''
-    products_df = pd.read_csv(out_dir, index_col='SKU').convert_dtypes()
-
-    '''
-    # TODO: finish testing
     print("Accesing API requests")
     APIRequests(products_df)
+    print("Requests done!")
     pass
 
 
