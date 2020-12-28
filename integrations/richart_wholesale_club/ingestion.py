@@ -70,11 +70,32 @@ def editCategoryStr(row):
     result += str(row['SUB_SUB_CATEGORY'])
     return result.lower()
 
-# TODO: Get package from product
+
+# Read dataframe's item description and  match a number(\d) and pattern
+# (from a list of units) to get the package of the product
+def extractPackage(df):
+    units = ["UN", "KGS", "KG", "GR", "GRS", "G", "ML", "CJA"]
+    for pattern in units:
+        match = re.findall(r"\b\d\.?\+?\d*\s?"+pattern+r"\b",
+                           df["ITEM_DESCRIPTION"])
+        if match:
+            last_match = match[-1].strip()
+            print(df["ITEM_DESCRIPTION"])
+            df["ITEM_DESCRIPTION"] = re.sub(
+                last_match + r"\.?", '', df["ITEM_DESCRIPTION"])
+            df["ITEM_DESCRIPTION"] = re.sub(' +', ' ', df["ITEM_DESCRIPTION"])
+
+            df["PACKAGE"] = last_match
+            print("description:", df["ITEM_DESCRIPTION"],
+                  "Package: ", df["PACKAGE"])
+            return df
+    return df
 
 
-def getPackage(string):
-    return string
+# Extract the package and store it in its corresponding field in the df
+def filterPackage(df):
+    df = df.apply(extractPackage, axis=1)
+    return df
 
 
 # Join Category and Subcategory
@@ -92,6 +113,7 @@ def filterProducts(df):
     df1 = df1.applymap(lambda x: removeHtmlTags(str(x)))
     df.update(df1)
     df = joinCategories(df)
+    df = filterPackage(df)
     return df
 
 
@@ -147,7 +169,7 @@ def getMerchants(token, name):
 
 # update is_active field to true
 def updateMerchant(token, merchant_id, merchant):
-    
+
     url = f"{base_url}/api/merchants/{merchant_id}"
 
     payload = {
@@ -165,27 +187,78 @@ def updateMerchant(token, merchant_id, merchant):
     pass
 
 
-# delete
+# delete a merchant if it finds the string
 def deleteMerchant(token, merchant, response):
     merchant_id = searchMerchant(merchant, response)
-    url = f"{base_url}/api/merchants/{merchant_id}"
-    payload = {}
+    if merchant_id is not None:
+        url = f"{base_url}/api/merchants/{merchant_id}"
+        payload = {}
+        headers = {
+            'token': f'Bearer {token}'
+        }
+        response = rq.request("DELETE", url, headers=headers, data=payload)
+        print("deleteMerchant: ", response.status_code)
+        return 0
+    print("Merchant not found!")
+    return -1
+
+
+'''
+def sendProducts(token, merchant_id, merchant, df):
+    url = "{{base_url}}/api/products"
+
+    payload = {
+        "merchant_id": f"{merchant_id}",
+        "sku": f"{sku}",
+        "barcodes": ["62773501448"],
+        "brand": f"{brand_name}",
+        "name": f"{item_name}",
+        "description": f"{item_description}",
+        "package": f"{package}",
+        "image_url": f"{item_img}",
+        "category": f"{category}",
+        "url": "None",
+        "branch_products": [{
+            "branch": "Heartland Supercentre",
+            "stock": stock,
+            "price": price,
+            "branch": "Heartland Supercentre",
+            "stock": stock,
+            "price": price
+        }]
+    }
     headers = {
         'token': f'Bearer {token}'
     }
-    response = rq.request("DELETE", url, headers=headers, data=payload)
-    print("deleteMerchant: ", response.status_code)
+
+    #response = requests.request("POST", url, headers=headers, data=payload)
+
+    # print(response.text.encode('utf8'))
+    pass
+'''
+
+# get the 100 most expensive products of each branch and their package
+
+
+def getMostExpensive(token, df, merchant_id, merchant):
+    branches = df['BRANCH'].unique().dropna()
+    for i in branches:
+        me_df = df[df["BRANCH"] == i].nlargest(100, 'PRICE')
+        #sendProducts(token, merchant_id, merchant, me_df)
     pass
 
 
-# Requests
-def APIRequests():
+# Requests for the heroku API:
+def APIRequests(df):
     merchant = "Richard\'s"
     valid_token = getCredentials()
-    # TODO: remove this declaration of valid_token
     merchant_id, r = getMerchants(valid_token, merchant)
+    '''
+    TODO: remove comment
     updateMerchant(valid_token, merchant_id, merchant)
     deleteMerchant(valid_token, "Beauty", r)
+    '''
+    getMostExpensive(valid_token, df, merchant, merchant_id)
     pass
 
 
@@ -195,17 +268,28 @@ def process_csv_files():
     products_dir = "./data/PRODUCTS.csv"
     prices_dir = "./data/PRICES-STOCK.csv"
     # Create dataframes & filter into PRODUCTS.csv, SKU as unique index
+    print("reading " + products_dir)
     products_df = pd.read_csv(products_dir, sep='|',
                               index_col='SKU').convert_dtypes()
     products_df = filterProducts(products_df)
 
     # Create dataframes from PRICES-STOCK.csv and filter to
     # only elements in stock
+    print("reading " + prices_dir)
     prices_df = pd.read_csv(prices_dir, sep='|',
                             index_col='SKU').convert_dtypes()
     prices_df = filterPrice(prices_df)
     products_df = mergeDfsOut(products_df, prices_df)
-    APIRequests()
+    out_dir = './out/JOINT.csv'
+    print("reading " + out_dir)
+    # TODO: erase
+    '''
+    products_df = pd.read_csv(out_dir, index_col='SKU').convert_dtypes()
+
+    '''
+    # TODO: finish testing
+    print("Accesing API requests")
+    APIRequests(products_df)
     pass
 
 
