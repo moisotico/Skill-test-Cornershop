@@ -1,11 +1,11 @@
-import numpy as np
 import pandas as pd
 import requests as rq
 import re
 import os
+import timeit
 from credentials import GRAND_TYPE, CLIENT_ID, CLIENT_SECRET, BASE_URL
 
-# Get credentials variables. 
+# Get credentials variables.
 grant_type = GRAND_TYPE
 cliend_id = CLIENT_ID
 client_secret = CLIENT_SECRET
@@ -233,17 +233,19 @@ def sendProducts(df, token, merchant_id):
 
 # get the 100 most expensive products of each branch and their package
 def getMostExpensive(token, df, merchant_id):
-    branches = df['BRANCH'].unique().dropna()
+    # Only using 2 branches as explained in the constraint
+    branches = ["MM", "RHSM"]
     for i in branches:
         filtered_df = df[df["BRANCH"] == i].nlargest(100, 'PRICE')
         # filter packages before sending products to save time
+        print("Filtering 100 most expensive packages for branch: ", i)
         filtered_df = filterPackage(filtered_df)
-        print("Starting sendProducts for branch", i)
+        print("Starting sendProducts for branch:", i)
         j = 0
         while j < len(filtered_df):
-            sendProducts(filtered_df.iloc[j], token, merchant_id) 
+            sendProducts(filtered_df.iloc[j], token, merchant_id)
             j += 1
-    print("sendProducts OK")
+    print("Finished sending products")
     pass
 
 
@@ -273,9 +275,9 @@ def process_csv_files():
     print("reading " + prices_dir)
     prices_df = pd.read_csv(prices_dir, sep='|').convert_dtypes()
     prices_df = filterPrice(prices_df)
-    products_df = mergeDfsOut(products_df, prices_df)
     out_dir = './out/JOINT.csv'
-    print("reading " + out_dir)
+    print("writing:" + out_dir + " (before package extraction)")
+    products_df = mergeDfsOut(products_df, prices_df)
     print("Accesing API requests")
     APIRequests(products_df)
     pass
