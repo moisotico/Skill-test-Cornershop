@@ -208,7 +208,7 @@ def sendProducts(df, token, merchant_id):
     payload = {
         "merchant_id": f"{merchant_id}",
         "sku": str(df["SKU"]),
-        "barcodes": str(df["EAN"]),
+        "barcodes": ["62773501448"],
         "brand": str(df["BRAND_NAME"]),
         "name": str(df["ITEM_NAME"]),
         "description": str(df["ITEM_DESCRIPTION"]),
@@ -226,7 +226,8 @@ def sendProducts(df, token, merchant_id):
         'token': f'Bearer {token}'
     }
     response = rq.request("POST", url, headers=headers, json=payload)
-    print("sendProducts: ", response.status_code, "\n", payload)
+    #r_out = "SKU:" + str(df["SKU"])
+    #print(r_out, "status code:", response.status_code)
     pass
 
 
@@ -237,10 +238,12 @@ def getMostExpensive(token, df, merchant_id):
         filtered_df = df[df["BRANCH"] == i].nlargest(100, 'PRICE')
         # filter packages before sending products to save time
         filtered_df = filterPackage(filtered_df)
+        print("Starting sendProducts for branch", i)
         j = 0
-        while j < 100:
+        while j < len(filtered_df):
             sendProducts(filtered_df.iloc[j], token, merchant_id) 
             j += 1
+    print("sendProducts OK")
     pass
 
 
@@ -252,6 +255,7 @@ def APIRequests(df):
     updateMerchant(valid_token, merchant_id, merchant)
     deleteMerchant(valid_token, "Beauty", r)
     getMostExpensive(valid_token, df, merchant_id)
+    print("Requests done!")
     pass
 
 
@@ -274,7 +278,6 @@ def process_csv_files():
     print("reading " + out_dir)
     print("Accesing API requests")
     APIRequests(products_df)
-    print("Requests done!")
     pass
 
 
