@@ -23,11 +23,14 @@ The following is part of **Cornershop's backend skill integration test**. The re
 
 ### API Credentials
 
-- Create a file called `credentials.py`:
+- Create a file called `credentials.py` with the following data:
 
   ```shell
   $ cd Skill-test-Cornershop/integrations/richart_wholesale_club/
-  $ touch credentials.py
+  $ echo' GRAND_TYPE = "client_credentials"
+  CLIENT_ID = "mRkZGFjM"
+  CLIENT_SECRET = "ZGVmMjMz"
+  BASE_URL = "https://integration-skill-test-server.herokuapp.com/"' > credentials.py
   ```
 
 - Write the following in `credentials.py` and save:
@@ -39,9 +42,9 @@ The following is part of **Cornershop's backend skill integration test**. The re
   BASE_URL = "https://integration-skill-test-server.herokuapp.com/"
   ```
 
-### Option 1: Setting Anaconda/ Miniconda 
+### Option 1: Setting Miniconda / Anaconda 
 
-- If you have **Anaconda** or **Miniconda** installed [(you can get it here)](https://docs.conda.io/projects/conda/en/latest/user-guide/install/), try the following steps:
+- If you have **Miniconda/Anaconda** installed [(you can get it here)](https://docs.conda.io/projects/conda/en/latest/user-guide/install/), try the following steps:
 
   ```shell
   $ conda activate cornershop-test
