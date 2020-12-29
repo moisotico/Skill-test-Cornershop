@@ -6,4 +6,4 @@ __pycache__/
 out/
 data/
 notes.md
-integrations/richart_wholesale_club/credentials.py
+*credentials.py
