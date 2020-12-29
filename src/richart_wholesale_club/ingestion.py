@@ -2,7 +2,7 @@ import pandas as pd
 import requests as rq
 import re
 import os
-import timeit
+import sys
 from credentials import GRAND_TYPE, CLIENT_ID, CLIENT_SECRET, BASE_URL
 
 # Get credentials variables.
@@ -146,7 +146,9 @@ def getCredentials():
     payload = {}
     headers = {}
     response = rq.request("POST", url, headers=headers, data=payload)
-    print("getCredentials: ", response.status_code)
+    # check for errors and send to stderr
+    if response.status_code != 200:
+        print("getCredentials: ", response.status_code, file=sys.stderr)
     r = response.json()
     return r.get('access_token')
 
@@ -159,7 +161,9 @@ def getMerchants(token, name):
         'token': f'Bearer {token}'
     }
     response = rq.request("GET", url, headers=headers, data=payload)
-    print("getMerchants: ", response.status_code)
+    # check for errors and send to stderr
+    if response.status_code != 200:
+        print("getMerchants: ", response.status_code , file=sys.stderr)
     r = response.json()
     merchant_id = searchMerchant(name, r)
     return merchant_id, r
@@ -181,7 +185,9 @@ def updateMerchant(token, merchant_id, merchant):
         'token': f'Bearer {token}'
     }
     response = rq.request("PUT", url, headers=headers, json=payload)
-    print("updateMerchant: ", response.status_code)
+    # check for errors and send to stderr
+    if response.status_code != 200:
+        print("updateMerchant: ", response.status_code , file=sys.stderr)
     pass
 
 
@@ -195,9 +201,11 @@ def deleteMerchant(token, merchant, response):
             'token': f'Bearer {token}'
         }
         response = rq.request("DELETE", url, headers=headers, data=payload)
-        print("deleteMerchant: ", response.status_code)
+        # check for errors and send to stderr
+        if response.status_code != 200:
+            print("deleteMerchant: ", response.status_code , file=sys.stderr)
         return 0
-    print("Merchant not found!")
+    print("Merchant not found!", file=sys.stderr)
     return -1
 
 
@@ -226,8 +234,9 @@ def sendProducts(df, token, merchant_id):
         'token': f'Bearer {token}'
     }
     response = rq.request("POST", url, headers=headers, json=payload)
-    #r_out = "SKU:" + str(df["SKU"])
-    #print(r_out, "status code:", response.status_code)
+    if response.status_code != 200:
+        r_out = "SKU:" + str(df["SKU"])
+        print(r_out,"sendProducts: ", response.status_code , file=sys.stderr)
     pass
 
 
@@ -249,7 +258,7 @@ def getMostExpensive(token, df, merchant_id):
     pass
 
 
-# Requests for the heroku API:
+# Requests for the heroku API
 def APIRequests(df):
     merchant = "Richard\'s"
     valid_token = getCredentials()
@@ -276,7 +285,7 @@ def process_csv_files():
     prices_df = pd.read_csv(prices_dir, sep='|').convert_dtypes()
     prices_df = filterPrice(prices_df)
     out_dir = './out/JOINT.csv'
-    print("writing:" + out_dir + " (before package extraction)")
+    print("writing " + out_dir + " (before package extraction)")
     products_df = mergeDfsOut(products_df, prices_df)
     print("Accesing API requests")
     APIRequests(products_df)
