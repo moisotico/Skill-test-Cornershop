@@ -17,7 +17,7 @@ The following is part of **Cornershop's backend skill integration test**. The re
   $ git clone https://github.com/moisotico/Skill-test-Cornershop
   ```
 
-  
+  test_data_ingestion
 
 ## Setting your environment
 
@@ -26,7 +26,7 @@ The following is part of **Cornershop's backend skill integration test**. The re
 - Create a file called `credentials.py` with the following data:
 
   ```shell
-  $ cd Skill-test-Cornershop/integrations/richart_wholesale_club/
+  $ cd Skill-test-Cornershop/src/richart_wholesale_club/
   $ echo' GRAND_TYPE = "client_credentials"
   CLIENT_ID = "mRkZGFjM"
   CLIENT_SECRET = "ZGVmMjMz"
@@ -89,6 +89,7 @@ If working with Linux  some commands might change when running the Heroku app:
 - And run it:
 
   ```shell
+  $ cd integration-skill-test-server-master/
   $ docker-compose -f docker-compose.yml build
   $ docker-compose -f docker-compose.yml up web
   ```
@@ -98,8 +99,28 @@ If working with Linux  some commands might change when running the Heroku app:
 - Run the  file `ingestion.py` :
 
   ```shell
-  $ python3 ./integrations/richart_wholesale_club/ingestion.py
+  $ python3 ./src/richart_wholesale_club/ingestion.py
   ```
 
 
+
+## Test
+
+- To test, first we must install **pytest**:
+
+  ```shell
+  $ pip install pytest
+  ```
+
+- To run the tests:
+
+  ```shell
+  $ pytest-3
+  ```
+
+- We can also run the test like this: 
+
+  ``` sh
+  $ pytest-3 ./src/richart_wholesale_club/test_data_ingestion.py
+  ```
 
